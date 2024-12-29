@@ -42,7 +42,7 @@ BLOCKED_USERS=comma_separated_user_ids
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/velora-ai-bot.git
+git clone [https://github.com/yourusername/velora-ai-bot](https://github.com/afxz/Velora-AI-Telegram-Bot).git
 cd velora-ai-bot
 ```
 
