@@ -1,10 +1,8 @@
 const { MESSAGES, DONATION_URL, SOURCE_CODE_URL } = require('../config');
-const { isUserBlocked, checkRateLimit } = require('../utils/userChecks');
+const { checkUser } = require('../utils/userCheck');
 
 const handleStart = async (bot, msg) => {
-  if (isUserBlocked(msg.from.id) || await checkRateLimit(bot, msg)) {
-    return;
-  }
+  if (!await checkUser(bot, msg)) return;
 
   const keyboard = {
     inline_keyboard: [

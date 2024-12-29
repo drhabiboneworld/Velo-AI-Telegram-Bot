@@ -1,13 +1,11 @@
 const { MESSAGES } = require('../config');
-const { isUserBlocked, checkRateLimit } = require('../utils/userChecks');
+const { checkUser } = require('../utils/userCheck');
 
 // Store reply mode users
 const replyModeUsers = new Set();
 
 const handleReplyMode = async (bot, msg, match) => {
-  if (isUserBlocked(msg.from.id) || await checkRateLimit(bot, msg)) {
-    return;
-  }
+  if (!await checkUser(bot, msg)) return;
 
   const mode = match[1]?.toLowerCase();
   

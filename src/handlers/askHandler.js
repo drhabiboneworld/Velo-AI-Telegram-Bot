@@ -1,10 +1,8 @@
-const { isUserBlocked, checkRateLimit } = require('../utils/userChecks');
 const { processQuery } = require('./queryHandler');
+const { checkUser } = require('../utils/userCheck');
 
 const handleAskCommand = async (bot, msg, match) => {
-  if (isUserBlocked(msg.from.id) || await checkRateLimit(bot, msg)) {
-    return;
-  }
+  if (!await checkUser(bot, msg)) return;
 
   const query = match[1];
   if (!query) {

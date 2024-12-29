@@ -12,8 +12,9 @@ A powerful Telegram bot powered by Google's Gemini AI, offering intelligent conv
 - 💬 Natural conversation capabilities
 - ⚡ Fast response times
 - 🔄 Reply mode for seamless chat
-- ⏱️ Smart rate limiting
-- 🛡️ Spam protection
+- 👥 Multi-admin support
+- 🛡️ User blocking system
+- ✉️ Message length protection
 
 ## 🚀 Try the Bot
 
@@ -34,8 +35,8 @@ Create a `.env` file with:
 ```env
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 GEMINI_API_KEYS=your_gemini_api_key1,your_gemini_api_key2
-ADMIN_ID=your_telegram_user_id
-BLOCKED_USERS=comma_separated_user_ids
+ADMIN_ID=id1,id2,id3
+BLOCKED_USERS=blocked_id1,blocked_id2,blocked_id3
 ```
 
 ### Installation
@@ -74,13 +75,17 @@ The bot can be deployed to any Node.js hosting platform that supports:
 - `/ask` - Ask a question
 - `/reply` - Toggle reply mode (on/off)
 
-## ⚡ Rate Limiting
+## 🔐 Admin Features
 
-The bot implements smart rate limiting to prevent abuse:
-- Initial 3-second cooldown between messages
-- Exponential backoff for repeated spam
-- Automatic blocking after excessive spam
-- 24-hour reset period for good behavior
+- Multiple admin support through comma-separated IDs in `ADMIN_ID`
+- User blocking system through `BLOCKED_USERS` environment variable
+- Blocked users are silently ignored by the bot
+
+## 🛡️ Protection Features
+
+- Message length limit to prevent Telegram API errors
+- Automatic message splitting for long responses
+- Silent blocking of unwanted users
 
 ## 🤝 Contributing
 
