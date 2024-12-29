@@ -43,8 +43,8 @@ BLOCKED_USERS=blocked_id1,blocked_id2,blocked_id3
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/velora-ai-bot.git
-cd velora-ai-bot
+git clone https://github.com/afxz/Velora-AI-Telegram-Bot.git
+cd Velora-AI-Telegram-Bot
 ```
 
 2. Install dependencies
