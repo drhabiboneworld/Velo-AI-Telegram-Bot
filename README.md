@@ -43,7 +43,7 @@ BLOCKED_USERS=blocked_id1,blocked_id2,blocked_id3
 
 1. Clone the repository
 ```bash
-git clone https://github.com//afxz/Velo-AI-Telegram-Bot.git
+git clone https://github.com/afxz/Velo-AI-Telegram-Bot.git
 cd velo-ai-bot
 ```
 
