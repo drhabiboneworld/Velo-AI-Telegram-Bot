@@ -78,10 +78,10 @@ const startBot = async () => {
       { command: 'reply', description: 'Toggle reply mode (on/off)' }
     ]);
 
-    // Register command handlers
-    bot.onText(/\/start/, msg => handleStart(bot, msg));
-    bot.onText(/\/ask(?:\s+(.+))?/, (msg, match) => handleAskCommand(bot, msg, match));
-    bot.onText(/\/reply(?:\s+(.+))?/, (msg, match) => handleReplyMode(bot, msg, match));
+    // Register command handlers with improved regex patterns
+    bot.onText(/^\/start(?:@\w+)?$/, msg => handleStart(bot, msg));
+    bot.onText(/^\/ask(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleAskCommand(bot, msg, match));
+    bot.onText(/^\/reply(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleReplyMode(bot, msg, match));
 
     // Handle regular messages (for reply mode)
     bot.on('message', msg => {
