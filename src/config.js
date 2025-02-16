@@ -26,6 +26,6 @@ module.exports = {
   ADMIN_IDS,
   BLOCKED_USERS,
   DONATION_URL: "https://superprofile.bio/vp/64188fab190024001f59f638",
-  SOURCE_CODE_URL: "https://gplinks.co/velora",
+  SOURCE_CODE_URL: "https://droplink.co/velo",
   MESSAGES
 };
