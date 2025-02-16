@@ -9,6 +9,9 @@ const handleStart = async (bot, msg) => {
       [
         { text: '🎁 Support Development', url: DONATION_URL },
         { text: '📱 Source Code', url: SOURCE_CODE_URL }
+      ],
+      [
+        { text: '📢 Join Channel', url: 'https://t.me/VeloAI' }
       ]
     ]
   };

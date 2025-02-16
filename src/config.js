@@ -6,6 +6,7 @@ const MESSAGES = {
     "Quick Commands:\n" +
     "📝 /ask - Ask me anything\n" +
     "💭 /reply - Chat mode (DM only)\n\n" +
+    "Join our channel for updates: @VeloAI\n\n" +
     "Let's begin our conversation! 🚀",
   REPLY_MODE_DM_ONLY: "ℹ️ Reply mode only works in private chat!\n👉 Please message me directly @${botUsername} to use this feature",
   REPLY_MODE_ON: "✨ Reply mode is now ON. Chat with me directly!",

@@ -1,0 +1,17 @@
+name: telegram-gemini-bot
+service:
+  app:
+    image: node:16-slim
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - port: 3000
+    env:
+      - name: TELEGRAM_BOT_TOKEN
+        value: ""
+      - name: GEMINI_API_KEYS
+        value: ""
+      - name: ADMIN_ID
+        value: ""
+      - name: BLOCKED_USERS
+        value: ""
