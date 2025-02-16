@@ -5,9 +5,13 @@ const {
   handleStart,
   handleAskCommand,
   handleReplyMode,
-  handleMessage
+  handleMessage,
+  handleReminder,
+  handleBroadcast,
+  handleHelp
 } = require('./handlers');
 const { handleError } = require('./utils/errorHandler');
+const { setupScheduler } = require('./utils/scheduler');
 
 // Single bot instance
 let bot = null;
@@ -44,22 +48,22 @@ const cleanup = async () => {
 };
 
 const startBot = async () => {
-  // Clean up any existing instance
   await cleanup();
 
   try {
-    // Create new bot instance with optimized polling settings
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { 
       polling: {
         params: {
           timeout: 30,
           limit: 100
         },
-        interval: 2000 // Increased interval to reduce conflicts
+        interval: 2000
       }
     });
 
-    // Error handling
+    // Initialize scheduler
+    setupScheduler(bot);
+
     bot.on('polling_error', (error) => {
       if (error.code === 'ETELEGRAM' && error.message.includes('Conflict')) {
         console.log('Detected polling conflict, cleaning up...');
@@ -71,17 +75,29 @@ const startBot = async () => {
     
     bot.on('error', handleError);
 
-    // Set bot commands
     await bot.setMyCommands([
       { command: 'start', description: 'Start the bot' },
       { command: 'ask', description: 'Ask a question' },
-      { command: 'reply', description: 'Toggle reply mode (on/off)' }
+      { command: 'reply', description: 'Toggle reply mode (on/off)' },
+      { command: 'rem', description: 'Set a reminder (e.g., /rem 2h meeting)' },
+      { command: 'help', description: 'Show all commands' }
     ]);
 
     // Register command handlers with improved regex patterns
-    bot.onText(/^\/start(?:@\w+)?$/, msg => handleStart(bot, msg));
+    bot.onText(/^\/(start|help)(?:@\w+)?$/, msg => {
+      if (msg.text.startsWith('/help')) {
+        handleHelp(bot, msg);
+      } else {
+        handleStart(bot, msg);
+      }
+    });
+    
     bot.onText(/^\/ask(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleAskCommand(bot, msg, match));
     bot.onText(/^\/reply(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleReplyMode(bot, msg, match));
+    bot.onText(/^\/rem(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleReminder(bot, msg, match));
+    
+    // Broadcast commands
+    bot.onText(/^\/broadcast_(dm|groups|all)(?:@\w+)?$/, (msg, match) => handleBroadcast(bot, msg, match[1]));
 
     // Handle regular messages (for reply mode)
     bot.on('message', msg => {
@@ -97,7 +113,6 @@ const startBot = async () => {
   }
 };
 
-// Handle process termination
 process.on('SIGINT', async () => {
   await cleanup();
   server.close();
@@ -110,7 +125,6 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Handle uncaught errors
 process.on('uncaughtException', async (error) => {
   console.error('Uncaught Exception:', error);
   await cleanup();
@@ -118,5 +132,4 @@ process.on('uncaughtException', async (error) => {
   process.exit(1);
 });
 
-// Start the bot
 startBot().catch(console.error);
