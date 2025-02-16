@@ -5,7 +5,14 @@ service:
     build:
       dockerfile: Dockerfile
     ports:
-      - port: 3000
+      - port: 8080
+        protocol: http
+    healthCheck:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 30
     env:
       - name: TELEGRAM_BOT_TOKEN
         value: ""

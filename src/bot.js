@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const http = require('http');
 const { TELEGRAM_BOT_TOKEN } = require('./config');
 const {
   handleStart,
@@ -11,6 +12,21 @@ const { handleError } = require('./utils/errorHandler');
 // Single bot instance
 let bot = null;
 let isShuttingDown = false;
+
+// Create HTTP server for health checks
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200);
+    res.end('OK');
+  } else {
+    res.writeHead(404);
+    res.end('Not Found');
+  }
+});
+
+server.listen(8080, () => {
+  console.log('Health check server listening on port 8080');
+});
 
 const cleanup = async () => {
   if (bot && !isShuttingDown) {
@@ -84,11 +100,13 @@ const startBot = async () => {
 // Handle process termination
 process.on('SIGINT', async () => {
   await cleanup();
+  server.close();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   await cleanup();
+  server.close();
   process.exit(0);
 });
 
@@ -96,6 +114,7 @@ process.on('SIGTERM', async () => {
 process.on('uncaughtException', async (error) => {
   console.error('Uncaught Exception:', error);
   await cleanup();
+  server.close();
   process.exit(1);
 });
 
