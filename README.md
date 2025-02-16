@@ -1,8 +1,8 @@
-# 🤖 Velora AI - Telegram Bot
+# 🤖 Velo AI - Telegram Bot
 
 A powerful Telegram bot powered by Google's Gemini AI, offering intelligent conversations and assistance.
 
-[![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blue?logo=telegram)](https://t.me/VeloraAIbot)
+[![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blue?logo=telegram)](https://t.me/VeloAIbot)
 [![Node.js](https://img.shields.io/badge/Node.js-v16+-green?logo=node.js)](https://nodejs.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -18,7 +18,7 @@ A powerful Telegram bot powered by Google's Gemini AI, offering intelligent conv
 
 ## 🚀 Try the Bot
 
-You can try the bot right now by messaging [@VeloraAIbot](https://t.me/VeloraAIbot) on Telegram!
+You can try the bot right now by messaging [@VeloAIbot](https://t.me/VeloAIbot) on Telegram!
 
 ## 🛠️ Development
 
@@ -43,8 +43,8 @@ BLOCKED_USERS=blocked_id1,blocked_id2,blocked_id3
 
 1. Clone the repository
 ```bash
-git clone https://github.com/afxz/Velora-AI-Telegram-Bot.git
-cd Velora-AI-Telegram-Bot
+git clone https://github.com/yourusername/velo-ai-bot.git
+cd velo-ai-bot
 ```
 
 2. Install dependencies

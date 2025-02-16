@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: telegram-gemini-bot
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: GEMINI_API_KEYS
+        sync: false
+      - key: ADMIN_ID
+        sync: false
+      - key: BLOCKED_USERS
+        sync: false
