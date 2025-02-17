@@ -50,28 +50,31 @@ const BLOCKED_USERS = process.env.BLOCKED_USERS ?
   process.env.BLOCKED_USERS.split(',').map(id => parseInt(id.trim())) :
   [];
 
-// Premium plans configuration
+// Premium plans configuration with direct payment links
 const PREMIUM_PLANS = {
   MONTHLY: {
     id: 'monthly',
     name: 'Monthly Premium',
     price: 2,
     duration: 30, // days
-    description: 'Monthly Premium Plan'
+    description: 'Monthly Premium Plan',
+    payment_url: 'https://oxapay.com/pay/31173867' // Replace with your actual monthly plan link
   },
   SEMIANNUAL: {
     id: 'semiannual',
     name: '6 Months Premium',
     price: 10,
     duration: 180, // days
-    description: '6 Months Premium Plan'
+    description: '6 Months Premium Plan',
+    payment_url: 'https://app.oxapay.com/pay/24372024' // Replace with your actual 6-month plan link
   },
   ANNUAL: {
     id: 'annual',
     name: 'Annual Premium',
     price: 20,
     duration: 365, // days
-    description: 'Annual Premium Plan'
+    description: 'Annual Premium Plan',
+    payment_url: 'https://app.oxapay.com/pay/31173867' // Replace with your actual annual plan link
   }
 };
 
@@ -84,7 +87,6 @@ const USAGE_LIMITS = {
 module.exports = {
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
   GEMINI_API_KEYS: process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [],
-  OXAPAY_MERCHANT_API: process.env.OXAPAY_MERCHANT_API,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_KEY: process.env.SUPABASE_KEY,
   ADMIN_IDS,

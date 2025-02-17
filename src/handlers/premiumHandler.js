@@ -1,5 +1,4 @@
 const { MESSAGES, PREMIUM_PLANS } = require('../config');
-const { createPayment } = require('../services/oxapay');
 const { getSubscription } = require('../services/supabase');
 
 const handlePremium = async (bot, msg) => {
@@ -49,43 +48,34 @@ const handlePremium = async (bot, msg) => {
 const handlePremiumCallback = async (bot, query) => {
   try {
     const [_, plan] = query.data.split('_');
-    const userId = query.from.id;
+    const planConfig = PREMIUM_PLANS[plan.toUpperCase()];
 
-    // First, answer the callback query immediately to prevent timeout
+    if (!planConfig) {
+      throw new Error('Invalid plan selected');
+    }
+
+    // Answer the callback query immediately
     await bot.answerCallbackQuery(query.id);
 
-    // Send processing message
-    const processingMsg = await bot.sendMessage(
-      query.message.chat.id,
-      MESSAGES.PAYMENT_PROCESSING
+    // Create payment keyboard with direct payment link
+    const keyboard = {
+      inline_keyboard: [[
+        { text: '💳 Pay Now', url: planConfig.payment_url }
+      ]]
+    };
+
+    // Update the message with payment link
+    await bot.editMessageText(
+      `Great choice! Click below to complete your payment for the ${planConfig.name}:`,
+      {
+        chat_id: query.message.chat.id,
+        message_id: query.message.message_id,
+        reply_markup: keyboard,
+        parse_mode: 'HTML'
+      }
     );
-
-    const payment = await createPayment(userId, plan);
-    
-    if (payment && payment.payment_url) {
-      const keyboard = {
-        inline_keyboard: [[
-          { text: '💳 Pay Now', url: payment.payment_url }
-        ]]
-      };
-
-      // Update the processing message instead of editing the original
-      await bot.editMessageText(
-        `Great choice! Click below to complete your payment:`,
-        {
-          chat_id: query.message.chat.id,
-          message_id: processingMsg.message_id,
-          reply_markup: keyboard,
-          parse_mode: 'HTML'
-        }
-      );
-    } else {
-      throw new Error('Failed to create payment');
-    }
   } catch (error) {
     console.error('Premium payment error:', error);
-    
-    // Try to send a new message if editing fails
     try {
       await bot.sendMessage(
         query.message.chat.id,

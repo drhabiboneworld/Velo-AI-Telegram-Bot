@@ -15,36 +15,11 @@ if (!TELEGRAM_BOT_TOKEN) {
 let bot = null;
 let isShuttingDown = false;
 
-// Create HTTP server for health checks and webhooks
+// Create HTTP server for health checks
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200);
     res.end('OK');
-  } else if (req.url === '/oxapay/callback' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', async () => {
-      try {
-        const data = JSON.parse(body);
-        // Handle OxaPay callback
-        if (data.status === 'completed') {
-          const { userId, plan, duration } = data.metadata;
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + duration);
-          
-          await createSubscription(userId, plan, expiresAt);
-          await bot.sendMessage(userId, MESSAGES.PAYMENT_SUCCESS);
-        }
-        res.writeHead(200);
-        res.end('OK');
-      } catch (error) {
-        console.error('Webhook error:', error);
-        res.writeHead(500);
-        res.end('Error');
-      }
-    });
   } else {
     res.writeHead(404);
     res.end('Not Found');
