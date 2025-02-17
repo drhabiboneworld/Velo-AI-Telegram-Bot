@@ -72,7 +72,7 @@ const PREMIUM_PLANS = {
     price: 10,
     duration: 180, // days
     description: '6 Months Premium Plan',
-    payment_url: 'https://app.oxapay.com/pay/24372024'
+    payment_url: 'https://oxapay.com/pay/24372024'
   },
   ANNUAL: {
     id: 'annual',
@@ -80,7 +80,7 @@ const PREMIUM_PLANS = {
     price: 20,
     duration: 365, // days
     description: 'Annual Premium Plan',
-    payment_url: 'https://app.oxapay.com/pay/47226401'
+    payment_url: 'https://oxapay.com/pay/47226401'
   }
 };
 
@@ -100,6 +100,6 @@ module.exports = {
   BLOCKED_USERS,
   PREMIUM_PLANS,
   USAGE_LIMITS,
-  SOURCE_CODE_URL: "https://gplinks.co/velora",
+  SOURCE_CODE_URL: "https://droplink.co/velo",
   MESSAGES
 };
