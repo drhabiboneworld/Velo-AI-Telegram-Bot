@@ -1,36 +1,23 @@
 const { MESSAGES, PREMIUM_PLANS } = require('../config');
-const { getSubscription } = require('../services/supabase');
+const { createSubscription } = require('../services/supabase');
 
 const handlePremium = async (bot, msg) => {
   const chatId = msg.chat.id;
-  const userId = msg.from.id;
-
-  // Check if user already has an active subscription
-  const subscription = await getSubscription(userId);
-  if (subscription && subscription.status === 'active' && new Date(subscription.expires_at) > new Date()) {
-    const expiryDate = new Date(subscription.expires_at).toLocaleDateString();
-    await bot.sendMessage(
-      chatId,
-      `You already have an active premium subscription until ${expiryDate}!`,
-      { parse_mode: 'HTML' }
-    );
-    return;
-  }
 
   // Create inline keyboard with premium plans
   const keyboard = {
     inline_keyboard: [
       [{
         text: `Monthly - $${PREMIUM_PLANS.MONTHLY.price}`,
-        callback_data: `premium_monthly`
+        callback_data: 'premium_MONTHLY'
       }],
       [{
         text: `6 Months - $${PREMIUM_PLANS.SEMIANNUAL.price}`,
-        callback_data: `premium_semiannual`
+        callback_data: 'premium_SEMIANNUAL'
       }],
       [{
         text: `Yearly - $${PREMIUM_PLANS.ANNUAL.price}`,
-        callback_data: `premium_annual`
+        callback_data: 'premium_ANNUAL'
       }]
     ]
   };
@@ -47,11 +34,33 @@ const handlePremium = async (bot, msg) => {
 
 const handlePremiumCallback = async (bot, query) => {
   try {
-    const [_, plan] = query.data.split('_');
-    const planConfig = PREMIUM_PLANS[plan.toUpperCase()];
+    console.log('Received callback data:', query.data);
 
+    if (!query.data || !query.data.includes('_')) {
+      console.error('Invalid callback data format:', query.data);
+      throw new Error('Invalid callback data format');
+    }
+
+    const [prefix, action] = query.data.split('_');
+    
+    if (prefix !== 'premium') {
+      console.error('Invalid callback prefix:', prefix);
+      throw new Error('Invalid callback prefix');
+    }
+
+    // Handle the initial premium button click from start message
+    if (action === 'START') {
+      await bot.answerCallbackQuery(query.id);
+      return handlePremium(bot, { chat: { id: query.message.chat.id } });
+    }
+
+    console.log('Looking up plan with key:', action);
+    console.log('Available plans:', Object.keys(PREMIUM_PLANS));
+
+    const planConfig = PREMIUM_PLANS[action];
     if (!planConfig) {
-      throw new Error('Invalid plan selected');
+      console.error('Plan not found for key:', action);
+      throw new Error(`Plan not found: ${action}`);
     }
 
     // Answer the callback query immediately
@@ -64,9 +73,13 @@ const handlePremiumCallback = async (bot, query) => {
       ]]
     };
 
-    // Update the message with payment link
+    // Update the message with payment instructions and link
+    const paymentInstructions = MESSAGES.PAYMENT_INSTRUCTIONS
+      .replace('${planName}', planConfig.name)
+      .replace('${price}', planConfig.price);
+
     await bot.editMessageText(
-      `Great choice! Click below to complete your payment for the ${planConfig.name}:`,
+      paymentInstructions,
       {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
@@ -77,9 +90,18 @@ const handlePremiumCallback = async (bot, query) => {
   } catch (error) {
     console.error('Premium payment error:', error);
     try {
-      await bot.sendMessage(
-        query.message.chat.id,
-        MESSAGES.PAYMENT_FAILED
+      // Send a more detailed error message in development
+      const errorMessage = process.env.NODE_ENV === 'development' 
+        ? `${MESSAGES.PAYMENT_FAILED}\n\nDebug: ${error.message}`
+        : MESSAGES.PAYMENT_FAILED;
+
+      await bot.editMessageText(
+        errorMessage,
+        {
+          chat_id: query.message.chat.id,
+          message_id: query.message.message_id,
+          parse_mode: 'HTML'
+        }
       );
     } catch (sendError) {
       console.error('Failed to send error message:', sendError);

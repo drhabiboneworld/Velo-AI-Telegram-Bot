@@ -1,39 +1,43 @@
 const axios = require('axios');
-const { OXAPAY_MERCHANT_API, PREMIUM_PLANS } = require('../config');
+const { OXAPAY_MERCHANT_API } = require('../config');
 
 const OXAPAY_API_URL = 'https://api.oxapay.com/merchants';
 
+// Create a payment request
 const createPayment = async (userId, plan) => {
   try {
-    const planConfig = PREMIUM_PLANS[plan.toUpperCase()];
-    if (!planConfig) {
-      throw new Error('Invalid plan selected');
-    }
-
-    const response = await axios.post(`${OXAPAY_API_URL}/request`, {
+    const payload = {
       merchant: OXAPAY_MERCHANT_API,
-      amount: planConfig.price,
+      amount: plan.price.toString(),
       currency: 'USD',
-      order_id: `${userId}_${planConfig.id}_${Date.now()}`,
-      description: planConfig.description,
-      callback_url: `${process.env.WEBHOOK_URL}/oxapay/callback`,
-      success_url: `https://t.me/VeloAIbot?start=payment_success`,
-      cancel_url: `https://t.me/VeloAIbot?start=payment_cancelled`,
-      metadata: {
-        userId: userId,
-        plan: planConfig.id,
-        duration: planConfig.duration
-      }
+      order_id: `${userId}_${plan.id}_${Date.now()}`,
+      description: plan.description,
+      success_url: `https://t.me/VeloAIbot?start=payment_success_${userId}`,
+      cancel_url: `https://t.me/VeloAIbot?start=payment_cancelled`
+    };
+
+    console.log('Creating payment with payload:', {
+      ...payload,
+      merchant: '***' // Hide API key in logs
     });
+
+    const response = await axios.post(`${OXAPAY_API_URL}/request`, payload);
+
+    console.log('OxaPay response:', response.data);
+
+    if (!response.data || !response.data.status) {
+      throw new Error('Invalid response from OxaPay');
+    }
 
     return response.data;
   } catch (error) {
-    console.error('OxaPay payment creation error:', error);
-    throw error;
+    console.error('OxaPay payment creation error:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || error.message);
   }
 };
 
-const verifyPayment = async (paymentId) => {
+// Check payment status
+const checkPaymentStatus = async (paymentId) => {
   try {
     const response = await axios.post(`${OXAPAY_API_URL}/status`, {
       merchant: OXAPAY_MERCHANT_API,
@@ -42,12 +46,12 @@ const verifyPayment = async (paymentId) => {
 
     return response.data;
   } catch (error) {
-    console.error('OxaPay payment verification error:', error);
+    console.error('OxaPay status check error:', error.response?.data || error.message);
     throw error;
   }
 };
 
 module.exports = {
   createPayment,
-  verifyPayment
+  checkPaymentStatus
 };

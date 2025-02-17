@@ -7,7 +7,7 @@ const handleStart = async (bot, msg) => {
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '💎 Premium', callback_data: 'premium_info' }
+        { text: '💎 Get Premium', callback_data: 'premium_START' }
       ],
       [
         { text: '📢 Join Channel', url: 'https://t.me/VeloAI' }

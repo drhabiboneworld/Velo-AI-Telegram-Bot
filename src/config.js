@@ -36,9 +36,15 @@ const MESSAGES = {
     "🚀 Priority response handling\n" +
     "💫 Extended context memory\n\n" +
     "Click the buttons below to upgrade:",
-  PAYMENT_PROCESSING: "⌛ Processing your payment...",
+  PAYMENT_INSTRUCTIONS: "💳 <b>Payment Instructions</b>\n\n" +
+    "1. Click the 'Pay Now' button below to make the payment\n" +
+    "2. Your premium access will be activated automatically after payment\n\n" +
+    "⚠️ If automatic activation doesn't work:\n" +
+    "Send your payment proof to @nvkio for manual verification\n\n" +
+    "Your selected plan: ${planName}\n" +
+    "Amount: $${price}",
   PAYMENT_SUCCESS: "🎉 Thank you for upgrading to Premium!\n\nYour premium features are now active. Enjoy enhanced limits and features!",
-  PAYMENT_FAILED: "❌ Payment failed. Please try again or contact support."
+  PAYMENT_FAILED: "❌ Payment failed. Please try again or contact @nvkio for support."
 };
 
 // Parse IDs from env vars
@@ -58,7 +64,7 @@ const PREMIUM_PLANS = {
     price: 2,
     duration: 30, // days
     description: 'Monthly Premium Plan',
-    payment_url: 'https://oxapay.com/pay/31173867' // Replace with your actual monthly plan link
+    payment_url: 'https://oxapay.com/pay/31173867'
   },
   SEMIANNUAL: {
     id: 'semiannual',
@@ -66,7 +72,7 @@ const PREMIUM_PLANS = {
     price: 10,
     duration: 180, // days
     description: '6 Months Premium Plan',
-    payment_url: 'https://app.oxapay.com/pay/24372024' // Replace with your actual 6-month plan link
+    payment_url: 'https://app.oxapay.com/pay/24372024'
   },
   ANNUAL: {
     id: 'annual',
@@ -74,7 +80,7 @@ const PREMIUM_PLANS = {
     price: 20,
     duration: 365, // days
     description: 'Annual Premium Plan',
-    payment_url: 'https://app.oxapay.com/pay/31173867' // Replace with your actual annual plan link
+    payment_url: 'https://app.oxapay.com/pay/47226401'
   }
 };
 
@@ -89,6 +95,7 @@ module.exports = {
   GEMINI_API_KEYS: process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [],
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_KEY: process.env.SUPABASE_KEY,
+  OXAPAY_MERCHANT_API: process.env.OXAPAY_MERCHANT_API,
   ADMIN_IDS,
   BLOCKED_USERS,
   PREMIUM_PLANS,
