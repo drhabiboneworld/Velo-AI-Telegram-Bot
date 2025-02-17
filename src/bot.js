@@ -1,36 +1,71 @@
 const TelegramBot = require('node-telegram-bot-api');
 const http = require('http');
 const { TELEGRAM_BOT_TOKEN } = require('./config');
-const {
-  handleStart,
-  handleAskCommand,
-  handleReplyMode,
-  handleMessage,
-  handleReminder,
-  handleBroadcast,
-  handleHelp
-} = require('./handlers');
+const handlers = require('./handlers');
 const { handleError } = require('./utils/errorHandler');
-const { setupScheduler } = require('./utils/scheduler');
+const { handlePremium, handlePremiumCallback } = require('./handlers/premiumHandler');
+
+// Validate required environment variables
+if (!TELEGRAM_BOT_TOKEN) {
+  console.error('ERROR: TELEGRAM_BOT_TOKEN is required!');
+  process.exit(1);
+}
 
 // Single bot instance
 let bot = null;
 let isShuttingDown = false;
 
-// Create HTTP server for health checks
+// Create HTTP server for health checks and webhooks
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200);
     res.end('OK');
+  } else if (req.url === '/oxapay/callback' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        // Handle OxaPay callback
+        if (data.status === 'completed') {
+          const { userId, plan, duration } = data.metadata;
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + duration);
+          
+          await createSubscription(userId, plan, expiresAt);
+          await bot.sendMessage(userId, MESSAGES.PAYMENT_SUCCESS);
+        }
+        res.writeHead(200);
+        res.end('OK');
+      } catch (error) {
+        console.error('Webhook error:', error);
+        res.writeHead(500);
+        res.end('Error');
+      }
+    });
   } else {
     res.writeHead(404);
     res.end('Not Found');
   }
 });
 
-server.listen(8080, () => {
-  console.log('Health check server listening on port 8080');
-});
+// Try different ports if 8080 is in use
+const startServer = (port = 8080) => {
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is in use, trying ${port + 1}`);
+      startServer(port + 1);
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+};
+
+startServer();
 
 const cleanup = async () => {
   if (bot && !isShuttingDown) {
@@ -51,25 +86,22 @@ const startBot = async () => {
   await cleanup();
 
   try {
+    console.log('Starting Telegram bot...');
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { 
       polling: {
         params: {
           timeout: 30,
-          limit: 100
+          allowed_updates: ["message", "callback_query"]
         },
         interval: 2000
       }
     });
 
-    // Initialize scheduler
-    setupScheduler(bot);
-
     bot.on('polling_error', (error) => {
+      console.error('Polling error:', error.message);
       if (error.code === 'ETELEGRAM' && error.message.includes('Conflict')) {
         console.log('Detected polling conflict, cleaning up...');
         cleanup().catch(console.error);
-      } else {
-        console.error('Polling error:', error.message);
       }
     });
     
@@ -79,30 +111,26 @@ const startBot = async () => {
       { command: 'start', description: 'Start the bot' },
       { command: 'ask', description: 'Ask a question' },
       { command: 'reply', description: 'Toggle reply mode (on/off)' },
-      { command: 'rem', description: 'Set a reminder (e.g., /rem 2h meeting)' },
-      { command: 'help', description: 'Show all commands' }
+      { command: 'premium', description: 'Upgrade to Premium' }
     ]);
 
-    // Register command handlers with improved regex patterns
-    bot.onText(/^\/(start|help)(?:@\w+)?$/, msg => {
-      if (msg.text.startsWith('/help')) {
-        handleHelp(bot, msg);
-      } else {
-        handleStart(bot, msg);
+    // Register command handlers
+    bot.onText(/^\/start(?:@\w+)?$/, msg => handlers.handleStart(bot, msg));
+    bot.onText(/^\/ask(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handlers.handleAskCommand(bot, msg, match));
+    bot.onText(/^\/reply(?:@\w+)?(?:\s+(on|off))?$/, (msg, match) => handlers.handleReplyMode(bot, msg, match));
+    bot.onText(/^\/premium(?:@\w+)?$/, msg => handlePremium(bot, msg));
+    
+    // Handle callback queries for premium
+    bot.on('callback_query', query => {
+      if (query.data.startsWith('premium_')) {
+        handlePremiumCallback(bot, query);
       }
     });
     
-    bot.onText(/^\/ask(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleAskCommand(bot, msg, match));
-    bot.onText(/^\/reply(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleReplyMode(bot, msg, match));
-    bot.onText(/^\/rem(?:@\w+)?(?:\s+(.+))?$/, (msg, match) => handleReminder(bot, msg, match));
-    
-    // Broadcast commands
-    bot.onText(/^\/broadcast_(dm|groups|all)(?:@\w+)?$/, (msg, match) => handleBroadcast(bot, msg, match[1]));
-
     // Handle regular messages (for reply mode)
     bot.on('message', msg => {
       if (!msg.text?.startsWith('/')) {
-        handleMessage(bot, msg);
+        handlers.handleMessage(bot, msg);
       }
     });
 

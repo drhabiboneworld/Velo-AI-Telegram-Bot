@@ -3,7 +3,8 @@ const { checkUser } = require('../utils/userCheck');
 
 const handleAskCommand = async (bot, msg, match) => {
   // First check if user is allowed
-  if (!await checkUser(bot, msg)) return;
+  const isAllowed = await checkUser(bot, msg);
+  if (!isAllowed) return;
 
   // Extract query from the command
   const query = match ? match[1] : null;

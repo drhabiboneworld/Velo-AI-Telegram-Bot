@@ -1,49 +1,78 @@
-const { ADMIN_IDS, BLOCKED_USERS, PREMIUM_USERS, USAGE_LIMITS, MESSAGES } = require('../config');
+const { ADMIN_IDS, BLOCKED_USERS, USAGE_LIMITS, MESSAGES } = require('../config');
+const { getSubscription } = require('../services/supabase');
 
-// Store daily usage counts
+// In-memory storage for user usage data
 const userUsage = new Map();
-
-// Reset usage counts at midnight
-setInterval(() => {
-  const now = new Date();
-  if (now.getHours() === 0 && now.getMinutes() === 0) {
-    userUsage.clear();
-  }
-}, 60000); // Check every minute
 
 const isAdmin = (userId) => ADMIN_IDS.includes(userId);
 const isBlocked = (userId) => BLOCKED_USERS.includes(userId);
-const isPremium = (userId) => PREMIUM_USERS.includes(userId);
 
-const checkUsageLimit = (userId) => {
-  const limit = isPremium(userId) ? USAGE_LIMITS.PREMIUM : USAGE_LIMITS.FREE;
-  const usage = userUsage.get(userId) || 0;
-  return usage < limit;
+const isPremium = async (userId) => {
+  if (isAdmin(userId)) return true; // Admins are always premium
+  const subscription = await getSubscription(userId);
+  return subscription && 
+         subscription.status === 'active' && 
+         new Date(subscription.expires_at) > new Date();
+};
+
+const resetDailyUsage = () => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return {
+    count: 0,
+    lastReset: now.getTime()
+  };
+};
+
+const checkUsageLimit = async (userId) => {
+  if (isAdmin(userId)) return true; // Admins have no limits
+  
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  
+  let usage = userUsage.get(userId);
+  if (!usage || usage.lastReset < now.getTime()) {
+    usage = resetDailyUsage();
+    userUsage.set(userId, usage);
+  }
+
+  const premium = await isPremium(userId);
+  const limit = premium ? USAGE_LIMITS.PREMIUM : USAGE_LIMITS.FREE;
+
+  return usage.count < limit;
 };
 
 const incrementUsage = (userId) => {
-  const currentUsage = userUsage.get(userId) || 0;
-  userUsage.set(userId, currentUsage + 1);
+  if (isAdmin(userId)) return; // Don't track admin usage
+  
+  let usage = userUsage.get(userId);
+  if (!usage) {
+    usage = resetDailyUsage();
+  }
+  usage.count++;
+  userUsage.set(userId, usage);
 };
 
-// Check if user is blocked and handle usage limits
 const checkUser = async (bot, msg) => {
   const userId = msg.from.id;
-  
+
   if (isBlocked(userId)) {
     return false;
   }
 
-  // Skip usage check for admins
   if (isAdmin(userId)) {
-    return true;
+    return true; // Admins bypass all checks
   }
 
-  if (!checkUsageLimit(userId)) {
+  const withinLimit = await checkUsageLimit(userId);
+  if (!withinLimit) {
     await bot.sendMessage(
       msg.chat.id,
       MESSAGES.LIMIT_REACHED,
-      { reply_to_message_id: msg.message_id }
+      { 
+        parse_mode: 'HTML',
+        reply_to_message_id: msg.message_id 
+      }
     );
     return false;
   }
@@ -52,9 +81,20 @@ const checkUser = async (bot, msg) => {
   return true;
 };
 
+// Clean up old usage data every day
+setInterval(() => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  
+  for (const [userId, usage] of userUsage.entries()) {
+    if (usage.lastReset < now.getTime()) {
+      userUsage.set(userId, resetDailyUsage());
+    }
+  }
+}, 24 * 60 * 60 * 1000);
+
 module.exports = {
   isAdmin,
-  isBlocked,
   isPremium,
   checkUser
 };
